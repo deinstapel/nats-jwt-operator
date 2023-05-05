@@ -1,0 +1,27 @@
+# permissions for end users to view natsoperators.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: natsoperator-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: nats-jwt-operator
+    app.kubernetes.io/part-of: nats-jwt-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: natsoperator-viewer-role
+rules:
+- apiGroups:
+  - nats.deinstapel.de
+  resources:
+  - natsoperators
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - nats.deinstapel.de
+  resources:
+  - natsoperators/status
+  verbs:
+  - get

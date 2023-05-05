@@ -1,0 +1,12 @@
+apiVersion: nats.deinstapel.de/v1alpha1
+kind: NatsUser
+metadata:
+  labels:
+    app.kubernetes.io/name: natsuser
+    app.kubernetes.io/instance: natsuser-sample
+    app.kubernetes.io/part-of: nats-jwt-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: nats-jwt-operator
+  name: natsuser-sample
+spec:
+  # TODO(user): Add fields here

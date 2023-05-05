@@ -1,0 +1,27 @@
+# permissions for end users to view natsaccounts.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: natsaccount-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: nats-jwt-operator
+    app.kubernetes.io/part-of: nats-jwt-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: natsaccount-viewer-role
+rules:
+- apiGroups:
+  - nats.deinstapel.de
+  resources:
+  - natsaccounts
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - nats.deinstapel.de
+  resources:
+  - natsaccounts/status
+  verbs:
+  - get
