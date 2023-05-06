@@ -1,0 +1,291 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.11.1
+  creationTimestamp: null
+  name: natsaccounts.nats.deinstapel.de
+spec:
+  group: nats.deinstapel.de
+  names:
+    kind: NatsAccount
+    listKind: NatsAccountList
+    plural: natsaccounts
+    singular: natsaccount
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: NatsAccount is the Schema for the natsaccounts API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: NatsAccountSpec defines the desired state of NatsAccount
+            properties:
+              allowedUserNamespaces:
+                description: Namespaces that are allowed for user creation. If a NatsUser
+                  is referencing this account outside of these namespaces, the operator
+                  will create an event for it saying that it's not allowed.
+                items:
+                  type: string
+                type: array
+              exports:
+                items:
+                  description: NATS Account export, duplicated here to have codegen
+                  properties:
+                    account_token_position:
+                      type: integer
+                    advertise:
+                      type: boolean
+                    description:
+                      type: string
+                    info_url:
+                      type: string
+                    name:
+                      type: string
+                    response_threshold:
+                      description: A Duration represents the elapsed time between
+                        two instants as an int64 nanosecond count. The representation
+                        limits the largest representable duration to approximately
+                        290 years.
+                      format: int64
+                      type: integer
+                    response_type:
+                      description: ResponseType is used to store an export response
+                        type
+                      type: string
+                    revocations:
+                      additionalProperties:
+                        format: int64
+                        type: integer
+                      description: RevocationList is used to store a mapping of public
+                        keys to unix timestamps
+                      type: object
+                    service_latency:
+                      description: "ServiceLatency is used when observing and exported
+                        service for latency measurements. Sampling 1-100, represents
+                        sampling rate, defaults to 100. Results is the subject where
+                        the latency metrics are published. A metric will be defined
+                        by the nats-server's ServiceLatency. Time durations are in
+                        nanoseconds. see https://github.com/nats-io/nats-server/blob/main/server/accounts.go#L524
+                        e.g. \n { \"app\": \"dlc22\", \"start\": \"2019-09-16T21:46:23.636869585-07:00\",
+                        \"svc\": 219732, \"nats\": { \"req\": 320415, \"resp\": 228268,
+                        \"sys\": 0 }, \"total\": 768415 }"
+                      properties:
+                        results:
+                          description: Subject is a string that represents a NATS
+                            subject
+                          type: string
+                        sampling:
+                          type: integer
+                      required:
+                      - results
+                      - sampling
+                      type: object
+                    subject:
+                      description: Subject is a string that represents a NATS subject
+                      type: string
+                    token_req:
+                      type: boolean
+                    type:
+                      description: ExportType defines the type of import/export.
+                      type: integer
+                  type: object
+                type: array
+              imports:
+                description: These fields are directly mappejwtd into the NATS JWT
+                  claim
+                items:
+                  description: Import describes a mapping from another account into
+                    this one
+                  properties:
+                    account:
+                      type: string
+                    local_subject:
+                      description: Local subject used to subscribe (for streams) and
+                        publish (for services) to. This value only needs setting if
+                        you want to change the value of Subject. If the value of Subject
+                        ends in > then LocalSubject needs to end in > as well. LocalSubject
+                        can contain $<number> wildcard references where number references
+                        the nth wildcard in Subject. The sum of wildcard reference
+                        and * tokens needs to match the number of * token in Subject.
+                      type: string
+                    name:
+                      type: string
+                    share:
+                      type: boolean
+                    subject:
+                      description: Subject field in an import is always from the perspective
+                        of the initial publisher - in the case of a stream it is the
+                        account owning the stream (the exporter), and in the case
+                        of a service it is the account making the request (the importer).
+                      type: string
+                    to:
+                      description: 'Deprecated: use LocalSubject instead To field
+                        in an import is always from the perspective of the subscriber
+                        in the case of a stream it is the client of the stream (the
+                        importer), from the perspective of a service, it is the subscription
+                        waiting for requests (the exporter). If the field is empty,
+                        it will default to the value in the Subject field.'
+                      type: string
+                    token:
+                      type: string
+                    type:
+                      description: ExportType defines the type of import/export.
+                      type: integer
+                  type: object
+                type: array
+              limits:
+                description: OperatorLimits are used to limit access by an account
+                properties:
+                  conn:
+                    format: int64
+                    type: integer
+                  consumer:
+                    format: int64
+                    type: integer
+                  data:
+                    format: int64
+                    type: integer
+                  disallow_bearer:
+                    type: boolean
+                  disk_max_stream_bytes:
+                    format: int64
+                    type: integer
+                  disk_storage:
+                    format: int64
+                    type: integer
+                  exports:
+                    format: int64
+                    type: integer
+                  imports:
+                    format: int64
+                    type: integer
+                  leaf:
+                    format: int64
+                    type: integer
+                  max_ack_pending:
+                    format: int64
+                    type: integer
+                  max_bytes_required:
+                    type: boolean
+                  mem_max_stream_bytes:
+                    format: int64
+                    type: integer
+                  mem_storage:
+                    format: int64
+                    type: integer
+                  payload:
+                    format: int64
+                    type: integer
+                  streams:
+                    format: int64
+                    type: integer
+                  subs:
+                    format: int64
+                    type: integer
+                  tiered_limits:
+                    additionalProperties:
+                      properties:
+                        consumer:
+                          format: int64
+                          type: integer
+                        disk_max_stream_bytes:
+                          format: int64
+                          type: integer
+                        disk_storage:
+                          format: int64
+                          type: integer
+                        max_ack_pending:
+                          format: int64
+                          type: integer
+                        max_bytes_required:
+                          type: boolean
+                        mem_max_stream_bytes:
+                          format: int64
+                          type: integer
+                        mem_storage:
+                          format: int64
+                          type: integer
+                        streams:
+                          format: int64
+                          type: integer
+                      type: object
+                    type: object
+                  wildcards:
+                    type: boolean
+                type: object
+              operatorRef:
+                description: OperatorRef contains the NATS operator that should issue
+                  this account.
+                properties:
+                  apiVersion:
+                    description: API version of the referent.
+                    type: string
+                  fieldPath:
+                    description: 'If referring to a piece of an object instead of
+                      an entire object, this string should contain a valid JSON/Go
+                      field access statement, such as desiredState.manifest.containers[2].
+                      For example, if the object reference is to a container within
+                      a pod, this would take on a value like: "spec.containers{name}"
+                      (where "name" refers to the name of the container that triggered
+                      the event) or if no container name is specified "spec.containers[2]"
+                      (container with index 2 in this pod). This syntax is chosen
+                      only to have some well-defined way of referencing a part of
+                      an object. TODO: this design is not final and this field is
+                      subject to change in the future.'
+                    type: string
+                  kind:
+                    description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                    type: string
+                  name:
+                    description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                    type: string
+                  namespace:
+                    description: 'Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
+                    type: string
+                  resourceVersion:
+                    description: 'Specific resourceVersion to which this reference
+                      is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
+                    type: string
+                  uid:
+                    description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
+                    type: string
+                type: object
+                x-kubernetes-map-type: atomic
+              revocations:
+                additionalProperties:
+                  format: int64
+                  type: integer
+                description: RevocationList is used to store a mapping of public keys
+                  to unix timestamps
+                type: object
+            type: object
+          status:
+            description: NatsAccountStatus defines the observed state of NatsAccount
+            properties:
+              accountSecretName:
+                type: string
+              jwt:
+                type: string
+              publicKey:
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
