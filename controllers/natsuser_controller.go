@@ -36,6 +36,14 @@ import (
 	"github.com/nats-io/nkeys"
 )
 
+const ACCOUNT_TEMPLATE = `-----BEGIN NATS USER JWT-----
+%s
+------END NATS USER JWT------
+
+-----BEGIN USER NKEY SEED-----
+%s
+------END USER NKEY SEED------`
+
 // NatsUserReconciler reconciles a NatsUser object
 type NatsUserReconciler struct {
 	client.Client
@@ -164,7 +172,7 @@ func (r *NatsUserReconciler) reconcileSecret(ctx context.Context, req ctrl.Reque
 
 func (r *NatsUserReconciler) reconcileKey(ctx context.Context, secret *corev1.Secret, account *natsv1alpha1.NatsUser, signer []byte) (bool, error) {
 	logger := log.FromContext(ctx)
-	keys, needsKeyUpdate, err := extractOrCreateKeys(secret, nkeys.CreateAccount)
+	keys, needsKeyUpdate, err := extractOrCreateKeys(secret, nkeys.CreateUser)
 	if err != nil {
 		return false, err
 	}
@@ -204,9 +212,11 @@ func (r *NatsUserReconciler) reconcileKey(ctx context.Context, secret *corev1.Se
 	if needsKeyUpdate || needsClaimsUpdate {
 		jwt, err := token.Encode(signerKp)
 		if err != nil {
+			logger.Info("token encode error", "pubkey", token.Subject, "public", public)
 			return false, err
 		}
 		secret.Data[OPERATOR_JWT] = []byte(jwt)
+		secret.Data[OPERATOR_CREDS] = []byte(fmt.Sprintf(ACCOUNT_TEMPLATE, jwt, seed))
 	}
 	return needsKeyUpdate || needsClaimsUpdate, nil
 }

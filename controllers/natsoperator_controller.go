@@ -45,6 +45,7 @@ const JWT_OPERATOR_FINALIZER = "nats.deinstapel.de/jwt-operator"
 const OPERATOR_SEED_KEY = "seed.nk"
 const OPERATOR_PUBLIC_KEY = "key.pub"
 const OPERATOR_JWT = "key.jwt"
+const OPERATOR_CREDS = "user.creds"
 
 //+kubebuilder:rbac:groups=nats.deinstapel.de,resources=natsoperators,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=nats.deinstapel.de,resources=natsoperators/status,verbs=get;update;patch
