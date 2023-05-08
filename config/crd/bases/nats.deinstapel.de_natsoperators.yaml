@@ -34,13 +34,6 @@ spec:
             type: object
           spec:
             properties:
-              serverUrls:
-                description: ServerURLs will be used further on down the line to connect
-                  to the NATS server to push account information using the system
-                  user.
-                items:
-                  type: string
-                type: array
               signing_keys:
                 description: SigningKeys is a Slice of other operator NKeys that can
                   be used to sign on behalf of the main operator identity.
