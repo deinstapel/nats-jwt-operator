@@ -35,7 +35,7 @@ type Permissions struct {
 func (p Permissions) toNats() jwt.Permissions {
 	return jwt.Permissions{
 		Pub:  p.Pub.toNats(),
-		Sub:  p.Pub.toNats(),
+		Sub:  p.Sub.toNats(),
 		Resp: p.Resp,
 	}
 }

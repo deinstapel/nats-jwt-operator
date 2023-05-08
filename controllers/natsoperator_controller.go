@@ -46,6 +46,20 @@ const OPERATOR_SEED_KEY = "seed.nk"
 const OPERATOR_PUBLIC_KEY = "key.pub"
 const OPERATOR_JWT = "key.jwt"
 const OPERATOR_CREDS = "user.creds"
+const OPERATOR_CONFIG_FILE = "auth.conf"
+const AUTH_CONFIG_TEMPLATE = `operator: %s
+system_account: %s
+resolver {
+	type: full
+	dir: './jwt'
+	allow_delete: true
+	interval: "2m"
+	timeout: "5s"
+}
+resolver_preload: {
+	%s: %s,
+}
+`
 
 //+kubebuilder:rbac:groups=nats.deinstapel.de,resources=natsoperators,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=nats.deinstapel.de,resources=natsoperators/status,verbs=get;update;patch
@@ -83,7 +97,7 @@ func (r *NatsOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			return ctrl.Result{}, err
 		}
 	}
-	_, err := r.reconcileSecret(ctx, req, operator)
+	needsRewriteConfig, err := r.reconcileSecret(ctx, req, operator)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -108,6 +122,17 @@ func (r *NatsOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 				OperatorRef: corev1.ObjectReference{
 					Namespace: req.Namespace,
 					Name:      req.Name,
+				},
+				Limits: natsv1alpha1.OperatorLimits{
+					NatsLimits: jwt.NatsLimits{
+						Subs:    -1,
+						Payload: -1,
+						Data:    -1,
+					},
+					AccountLimits: jwt.AccountLimits{
+						Conn:           -1,
+						DisallowBearer: true,
+					},
 				},
 			}
 			if err := r.Create(ctx, systemAccount); err != nil {
@@ -152,14 +177,21 @@ func (r *NatsOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 				},
 				Permissions: natsv1alpha1.Permissions{
 					Pub: natsv1alpha1.Permission{
-						Allow: []string{"$SYS.REQ.ACCOUNT.*.CLAIMS.UPDATE", "$SYS.REQ.CLAIMS.>"},
+						Allow: []string{"$SYS.REQ.ACCOUNT.*.CLAIMS.LOOKUP", "$SYS.REQ.CLAIMS.UPDATE"},
 					},
 					Sub: natsv1alpha1.Permission{
-						Allow: []string{"$SYS.REQ.ACCOUNT.*.CLAIMS.LOOKUP", "$SYS.REQ.CLAIMS.>"},
+						Allow: []string{"$SYS.REQ.ACCOUNT.*.CLAIMS.LOOKUP"},
 					},
 					Resp: &jwt.ResponsePermission{
 						MaxMsgs: 1,
 						Expires: -1,
+					},
+				},
+				Limits: natsv1alpha1.Limits{
+					NatsLimits: jwt.NatsLimits{
+						Subs:    -1,
+						Payload: -1,
+						Data:    -1,
 					},
 				},
 			}
@@ -183,22 +215,46 @@ func (r *NatsOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		}
 	}
 
-	// Finally, reconcile server configuration snippet
-	serverConfig := &corev1.Secret{}
-	if err := r.Get(ctx, client.ObjectKey{
-		Namespace: req.Namespace,
-		Name:      fmt.Sprintf("%v-jwt", req.Name),
-	}, serverConfig); errors.IsNotFound(err) {
-		logger.Info("creating server config")
-		// TODO: create server config file, issue operator JWT
-	} else if err != nil {
-		return ctrl.Result{}, err
-	}
-
-	return ctrl.Result{}, nil
+	return ctrl.Result{}, r.reconcileServerConfigSnipped(ctx, req, operator, systemAccount, needsRewriteConfig)
 }
 
-func (r *NatsOperatorReconciler) reconcileSecret(ctx context.Context, req ctrl.Request, operator *natsv1alpha1.NatsOperator) (*corev1.Secret, error) {
+func (r *NatsOperatorReconciler) reconcileServerConfigSnipped(ctx context.Context, req ctrl.Request, operator *natsv1alpha1.NatsOperator, sysacc *natsv1alpha1.NatsAccount, needsRefresh bool) error {
+	logger := log.FromContext(ctx)
+	// Finally, reconcile server configuration snippet
+	serverConfig := &corev1.Secret{}
+	hasSecret := true
+	serverConfigName := client.ObjectKey{
+		Namespace: req.Namespace,
+		Name:      fmt.Sprintf("%v-server-config", req.Name),
+	}
+	if err := r.Get(ctx, serverConfigName, serverConfig); errors.IsNotFound(err) {
+		logger.Info("creating server config")
+		serverConfig.Namespace = req.Namespace
+		serverConfig.Name = serverConfigName.Name
+		serverConfig.Type = "deinstapel.de/nats-configuration"
+		hasSecret = false
+	} else if err != nil {
+		return err
+	}
+	text := fmt.Sprintf(AUTH_CONFIG_TEMPLATE, operator.Status.JWT, sysacc.Status.PublicKey, sysacc.Status.PublicKey, sysacc.Status.JWT)
+	if !needsRefresh && serverConfig.Data != nil {
+		needsRefresh = needsRefresh || text != string(serverConfig.Data[OPERATOR_CONFIG_FILE])
+	}
+
+	if serverConfig.Data == nil || needsRefresh {
+		serverConfig.Data = map[string][]byte{
+			OPERATOR_CONFIG_FILE: []byte(text),
+		}
+	}
+
+	if !hasSecret {
+		return r.Create(ctx, serverConfig)
+	}
+
+	return r.Update(ctx, serverConfig)
+}
+
+func (r *NatsOperatorReconciler) reconcileSecret(ctx context.Context, req ctrl.Request, operator *natsv1alpha1.NatsOperator) (bool, error) {
 	// Try reconcile the secret containing the seed key for the operator
 	logger := log.FromContext(ctx)
 	operatorKeySecret := &corev1.Secret{}
@@ -210,25 +266,25 @@ func (r *NatsOperatorReconciler) reconcileSecret(ctx context.Context, req ctrl.R
 		operatorKeySecret.Type = "deinstapel.de/nats-operator"
 		hasSecret = false
 		if err := controllerutil.SetOwnerReference(operator, operatorKeySecret, r.Scheme); err != nil {
-			return nil, err
+			return false, err
 		}
 	} else if err != nil {
-		return nil, err
+		return false, err
 	}
 
 	logger.Info("reconciling operator keys")
 	hasChanges, err := r.reconcileKey(ctx, operatorKeySecret, operator)
 	if err != nil {
-		return nil, err
+		return false, err
 	}
 
 	if !hasSecret {
 		if err := r.Create(ctx, operatorKeySecret); err != nil {
-			return nil, err
+			return false, err
 		}
 	} else if hasChanges {
 		if err := r.Update(ctx, operatorKeySecret); err != nil {
-			return nil, err
+			return false, err
 		}
 	}
 
@@ -238,10 +294,10 @@ func (r *NatsOperatorReconciler) reconcileSecret(ctx context.Context, req ctrl.R
 		operator.Status.PublicKey = string(operatorKeySecret.Data[OPERATOR_PUBLIC_KEY])
 		operator.Status.JWT = string(operatorKeySecret.Data[OPERATOR_JWT])
 		if err := r.Status().Update(ctx, operator); err != nil {
-			return nil, err
+			return false, err
 		}
 	}
-	return operatorKeySecret, nil
+	return !hasSecret || hasChanges, nil
 }
 
 func (r *NatsOperatorReconciler) reconcileKey(ctx context.Context, secret *corev1.Secret, operator *natsv1alpha1.NatsOperator) (bool, error) {
