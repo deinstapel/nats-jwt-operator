@@ -37,9 +37,6 @@ type NatsOperatorSpec struct {
 	// SigningKeys is a Slice of other operator NKeys that can be used to sign on behalf of the main
 	// operator identity.
 	SigningKeys jwt.StringList `json:"signing_keys,omitempty"`
-
-	// ServerURLs will be used further on down the line to connect to the NATS server to push account information using the system user.
-	ServerURLs jwt.StringList `json:"serverUrls,omitempty"`
 }
 
 // NatsOperatorStatus defines the observed state of NatsOperator
