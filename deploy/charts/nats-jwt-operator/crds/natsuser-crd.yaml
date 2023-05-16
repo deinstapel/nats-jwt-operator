@@ -1,11 +1,10 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: natsusers.nats.deinstapel.de
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.1
-  labels:
-  {{- include "nats-jwt-operator.labels" . | nindent 4 }}
+  creationTimestamp: null
+  name: natsusers.nats.deinstapel.de
 spec:
   group: nats.deinstapel.de
   names:
@@ -43,17 +42,17 @@ spec:
                     description: API version of the referent.
                     type: string
                   fieldPath:
-                    description: 'If referring to a piece of an object instead of an
-                      entire object, this string should contain a valid JSON/Go field
-                      access statement, such as desiredState.manifest.containers[2].
+                    description: 'If referring to a piece of an object instead of
+                      an entire object, this string should contain a valid JSON/Go
+                      field access statement, such as desiredState.manifest.containers[2].
                       For example, if the object reference is to a container within
                       a pod, this would take on a value like: "spec.containers{name}"
                       (where "name" refers to the name of the container that triggered
                       the event) or if no container name is specified "spec.containers[2]"
-                      (container with index 2 in this pod). This syntax is chosen only
-                      to have some well-defined way of referencing a part of an object.
-                      TODO: this design is not final and this field is subject to change
-                      in the future.'
+                      (container with index 2 in this pod). This syntax is chosen
+                      only to have some well-defined way of referencing a part of
+                      an object. TODO: this design is not final and this field is
+                      subject to change in the future.'
                     type: string
                   kind:
                     description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
@@ -65,8 +64,8 @@ spec:
                     description: 'Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
                     type: string
                   resourceVersion:
-                    description: 'Specific resourceVersion to which this reference is
-                      made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
+                    description: 'Specific resourceVersion to which this reference
+                      is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
                     type: string
                   uid:
                     description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
@@ -99,7 +98,8 @@ spec:
                     type: integer
                   times:
                     items:
-                      description: TimeRange is used to represent a start and end time
+                      description: TimeRange is used to represent a start and end
+                        time
                       properties:
                         end:
                           type: string
@@ -127,8 +127,8 @@ spec:
                         type: array
                     type: object
                   resp:
-                    description: ResponsePermission can be used to allow responses to
-                      any reply subject that is received on a valid subscription.
+                    description: ResponsePermission can be used to allow responses
+                      to any reply subject that is received on a valid subscription.
                     properties:
                       max:
                         type: integer
@@ -175,9 +175,3 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
