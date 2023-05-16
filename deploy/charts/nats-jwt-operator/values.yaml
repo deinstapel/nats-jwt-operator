@@ -31,8 +31,8 @@ controllerManager:
         drop:
         - ALL
     image:
-      repository: controller
-      tag: latest
+      repository: ghcr.io/deinstapel/nats-jwt-operator/operator
+      tag: edge
     resources:
       limits:
         cpu: 500m
