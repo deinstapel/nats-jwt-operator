@@ -247,6 +247,10 @@ func (r *NatsOperatorReconciler) reconcileServerConfigSnipped(ctx context.Contex
 		}
 	}
 
+	if err := controllerutil.SetOwnerReference(operator, serverConfig, r.Scheme); err != nil {
+		return err
+	}
+
 	if !hasSecret {
 		return r.Create(ctx, serverConfig)
 	}
