@@ -24,7 +24,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	natsv1alpha1 "github.com/deinstapel/nats-jwt-operator/api/v1alpha1"
@@ -88,13 +87,8 @@ func (r *NatsAccountServer) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	if account.DeletionTimestamp != nil {
-		// TODO: Check if deletion is ok.
-		logger.Info("Processing deletion of account")
-		if controllerutil.RemoveFinalizer(account, JWT_OPERATOR_FINALIZER) {
-			if err := r.Update(ctx, account); err != nil {
-				return ctrl.Result{}, err
-			}
-		}
+		// We're not further processing the deletion here.
+		// TODO: correctly handle account revocation
 		delete(r.accountMap, account.Status.PublicKey)
 		return ctrl.Result{}, nil
 	}
@@ -110,8 +104,6 @@ func (r *NatsAccountServer) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			}()
 		}
 	}
-
-	// TODO: Push JWT to server
 
 	return ctrl.Result{}, nil
 }
