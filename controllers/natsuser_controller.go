@@ -42,7 +42,8 @@ const ACCOUNT_TEMPLATE = `-----BEGIN NATS USER JWT-----
 
 -----BEGIN USER NKEY SEED-----
 %s
-------END USER NKEY SEED------`
+------END USER NKEY SEED------
+`
 
 // NatsUserReconciler reconciles a NatsUser object
 type NatsUserReconciler struct {
