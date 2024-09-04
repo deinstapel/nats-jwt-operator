@@ -81,6 +81,7 @@ func main() {
 	go func() {
 		if err := accountServer.Run(mainContext, os.Getenv("NATS_URL"), os.Getenv("NATS_CREDS_FILE")); err != nil {
 			setupLog.Error(err, "Failed to run accountserver")
+			os.Exit(1)
 		}
 	}()
 
