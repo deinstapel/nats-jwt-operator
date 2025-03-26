@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"strings"
+	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -48,7 +49,7 @@ func NewAccountServer() *NatsAccountServer {
 func (r *NatsAccountServer) Run(ctx context.Context, url string, credsFile string) error {
 	logger := log.FromContext(ctx)
 	logger.Info("Connecting to nats", "server", url)
-	nc, err := nats.Connect(url, nats.UserCredentials(credsFile))
+	nc, err := nats.Connect(url, nats.UserCredentials(credsFile), nats.RetryOnFailedConnect(true), nats.MaxReconnects(-1), nats.ReconnectWait(1*time.Second))
 	if err != nil {
 		return err
 	}
